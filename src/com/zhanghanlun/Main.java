@@ -35,9 +35,6 @@ public class Main {
 		// 读取输入文件
 		String[] ecsContent = FileUtil.read(ecsDataPath, null);
 		String[] inputContent = FileUtil.read(inputFilePath, null);
-
-//		System.out.println("aa");
-//		System.out.println(inputContent);
 		// 功能实现入口
 		String[] resultContents = Predict.predictVm(ecsContent, inputContent);
 //		for(int i=0;i<resultContents.length;i++) {
