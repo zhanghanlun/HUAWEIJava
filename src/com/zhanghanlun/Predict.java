@@ -13,7 +13,8 @@ import java.util.Map.Entry;
 public class Predict {
 	
 	static int[] physical=new int[3];
-	private static HashMap<Integer, int[]> predictVmNums = new HashMap<>();//Predict VM info
+	private static int[][] PredictVM = new int[17][5];
+	private static double[] PredictVMNum= new double[18];
 	private static String resourceDimension;// Resource Dimension
 	private static String startTime;
 	private static String endTime;
@@ -62,13 +63,13 @@ public class Predict {
 //			}
 //
 //		}
-//		parseInputContent(inputContent);
-		
+		parseInputContent(inputContent);
+		PredictResult(startTime,endTime);
 //		String[] results = generateResult();
 //		System.out.println(results[0]);
-		for(int i=0;i<history.size();i++) {
-			results[i]=history.get(i);
-		}
+//		for(int i=0;i<history.size();i++) {
+//			results[i]=history.get(i);
+//		}
 		return results;
 	}
 	/**
@@ -90,11 +91,11 @@ public class Predict {
 			
 			if (i > 2 && i <= 2 + predictVmNum) {
 				String[] flavourItems = inputContent[i].split(" ");
-				int[] cpuAndMemAndPrenum = new int[3];
-				cpuAndMemAndPrenum[0] = Integer.parseInt(flavourItems[1]);//CPU flavor
-				cpuAndMemAndPrenum[1] = Integer.parseInt(flavourItems[2]) / 1024;//MEMORY flavor
-				cpuAndMemAndPrenum[2] = 1;//Will predict VM number
-				predictVmNums.put(Integer.parseInt(flavourItems[0].substring(6)), cpuAndMemAndPrenum);
+				int flavorNumber=Integer.parseInt(flavourItems[0].substring(6));
+				PredictVM[flavorNumber][0]=1;
+				PredictVM[flavorNumber][1]=Integer.parseInt(flavourItems[1]);
+				PredictVM[flavorNumber][2]=Integer.parseInt(flavourItems[2]) / 1024;
+				PredictVM[flavorNumber][3]=0;
 			}
 			
 			if (i == 4 + predictVmNum) { //Resource Dimension
@@ -140,39 +141,57 @@ public class Predict {
 		TrainData[day][flavor]=tamp;
 		return tamp;
 	}
+	/**
+	 * PredictResult Function
+	 * @param start
+	 * @param end
+	 */
+	
+	
+	//zhang
 	public static void PredictResult(String start,String end) {
 		int begin = changeDate(3,start);
 		int finish= changeDate(3,end);
 		for(int i=begin;i<=finish;i++) {
-			
+			for(int j=1;j<=15;j++) {
+				if(PredictVM[j][0]==1) {
+					PredictVMNum[j]+=LinearModel(i,j);
+				}
+			}
+		}
+		for(int i=1;i<=15;i++) {
+			if(PredictVM[i][0]==1) {
+				System.out.println(i+"    "+PredictVMNum[i]);
+				PredictVM[i][3]=(int) PredictVMNum[i];
+			}
 		}
 	}
-	private static String[] generateResult(){
-		totalPhysicalMachineNum =  predictVmNums.size();
-		result = new String[3 + predictVmNums.size() + totalPhysicalMachineNum];
-		
-		result[0] = String.valueOf(predictVmNums.size());
-		
-		Iterator<Entry<Integer, int[]>> iter = predictVmNums.entrySet().iterator();
-		int i=1;
-		while (iter.hasNext()) {
-			Map.Entry<Integer, int[]> entry = (Map.Entry<Integer, int[]>) iter.next();
-			int flavorName = entry.getKey();
-			int perFlavorNum = entry.getValue()[2];
-			result[i++] = "flavor" + flavorName + " " + perFlavorNum;
-		}
-		
-		result[i++] = "\n\n\n";
-		
-		test();
-		
-		result[i++] = String.valueOf(totalPhysicalMachineNum);
-		
-		for (int j = 0; j < totalPhysicalMachineNum; j++) {
-			result[i + j] = physicalAllocationResult[j];
-		}
-		return result;
-	}
+//	private static String[] generateResult(){
+//		totalPhysicalMachineNum =  predictVmNums.size();
+//		result = new String[3 + predictVmNums.size() + totalPhysicalMachineNum];
+//		
+//		result[0] = String.valueOf(predictVmNums.size());
+//		
+//		Iterator<Entry<Integer, int[]>> iter = predictVmNums.entrySet().iterator();
+//		int i=1;
+//		while (iter.hasNext()) {
+//			Map.Entry<Integer, int[]> entry = (Map.Entry<Integer, int[]>) iter.next();
+//			int flavorName = entry.getKey();
+//			int perFlavorNum = entry.getValue()[2];
+//			result[i++] = "flavor" + flavorName + " " + perFlavorNum;
+//		}
+//		
+//		result[i++] = "\r";// in this place must use the "\r" or " "
+//		
+//		test();
+//		
+//		result[i++] = String.valueOf(totalPhysicalMachineNum);
+//		
+//		for (int j = 0; j < totalPhysicalMachineNum; j++) {
+//			result[i + j] = physicalAllocationResult[j];
+//		}
+//		return result;
+//	}
 	
 	private static void test(){
 		physicalAllocationResult = new String[totalPhysicalMachineNum];
