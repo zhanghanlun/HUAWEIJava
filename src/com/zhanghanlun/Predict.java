@@ -5,26 +5,31 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 public class Predict {
-	static int[] Physical=new int[3];
-	static String[][] predictVM;
+	
+	static int[] physical=new int[3];
+	private static HashMap<Integer, int[]> predictVmNums = new HashMap<>();//Predict VM info
+	private static String resourceDimension;// Resource Dimension
+	private static String startTime;
+	private static String endTime;
+	private static int totalPhysicalMachineNum = 5;
+	private static String[] result;
+	private static String[] physicalAllocationResult;
+	
 	static Date date=new Date();
 	static double[][] TrainData=new double[1000][20];
 	static int BasePoint=0;
 	static SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd");
 
 	public static String[] predictVm(String[] ecsContent, String[] inputContent) {
-
-		/** =========do your work here========== **/
 		
-
 		String[] results = new String[ecsContent.length];
-
 		List<String> history = new ArrayList<String>();
-
 		for (int i = 0; i < ecsContent.length; i++) {
 			ecsContent[i]=ecsContent[i].replaceAll("\t+", " ");
 			if (ecsContent[i].contains(" ")
@@ -33,39 +38,78 @@ public class Predict {
 				String uuid = array[0];
 				String flavorName = array[1];
 				String createTime = array[2];
+				history.add(flavorName + "\t" + createTime);
 				int flavor=Integer.parseInt(flavorName.substring(6));
 				int DayIndex=changeDate(i,createTime);
 				if(flavor<19)
 					TrainData[DayIndex][flavor]++;			
-//				history.add(uuid + " " + flavorName + " " + createTime);
 			}
 		}
-		int testday=changeDate(3,"2015-02-20");
-		System.out.println(LinearModel(testday,3));
-//		System.out.println(TrainData[0][15]);
+//		int testday=changeDate(3,"2015-02-20");
+//		System.out.println(LinearModel(testday,3));
 		
-		for (int i = 0; i < inputContent.length; i++) {
-			if(i==0) {
-				System.out.println();
-				inputContent[i]=inputContent[i].replaceAll("\t+", " ");
-				String[] array = inputContent[i].split(" ");
-				Physical[0]=Integer.parseInt(array[0]);
-				Physical[1]=Integer.parseInt(array[1]);
-				Physical[2]=Integer.parseInt(array[2]);
-			}	
-			if(i==2) {
-				
-			}
-
+//		for (int i = 0; i < inputContent.length; i++) {
+//			if(i==0) {
+//				System.out.println();
+//				inputContent[i]=inputContent[i].replaceAll("\t+", " ");
+//				String[] array = inputContent[i].split(" ");
+//				physical[0]=Integer.parseInt(array[0]);
+//				physical[1]=Integer.parseInt(array[1]);
+//				physical[2]=Integer.parseInt(array[2]);
+//			}	
+//			if(i==2) {
+//				
+//			}
+//
+//		}
+//		parseInputContent(inputContent);
+		
+//		String[] results = generateResult();
+//		System.out.println(results[0]);
+		for(int i=0;i<history.size();i++) {
+			results[i]=history.get(i);
 		}
-
-		for (int i = 0; i < history.size(); i++) {
-			
-		}
-
 		return results;
 	}
-	//½«ÈÕÆÚyyyy-MM-dd¸ñÊ½×ª»»³ÉÌì
+	/**
+	 * è§£æžInput Dataæ•°æ®åˆ°ç›¸åº”çš„å¼•ç”¨
+	 */
+	private static void parseInputContent(String[] inputContent){
+		int predictVmNum = 0;
+		for (int i = 0; i < inputContent.length; i++) {
+			if (i == 0) {
+				String[] phyArray = inputContent[i].split(" ");
+				physical[0] = Integer.parseInt(phyArray[0]);//CPU
+				physical[1] = Integer.parseInt(phyArray[1]);//Memory
+				physical[2] = Integer.parseInt(phyArray[2]);//Hardware
+			}
+			
+			if (i == 2) {
+				predictVmNum = Integer.parseInt(inputContent[i]);
+			}
+			
+			if (i > 2 && i <= 2 + predictVmNum) {
+				String[] flavourItems = inputContent[i].split(" ");
+				int[] cpuAndMemAndPrenum = new int[3];
+				cpuAndMemAndPrenum[0] = Integer.parseInt(flavourItems[1]);//CPU flavor
+				cpuAndMemAndPrenum[1] = Integer.parseInt(flavourItems[2]) / 1024;//MEMORY flavor
+				cpuAndMemAndPrenum[2] = 1;//Will predict VM number
+				predictVmNums.put(Integer.parseInt(flavourItems[0].substring(6)), cpuAndMemAndPrenum);
+			}
+			
+			if (i == 4 + predictVmNum) { //Resource Dimension
+				resourceDimension = inputContent[i];
+			}
+			
+			if (i == 6 + predictVmNum) {
+				startTime = inputContent[i];
+				endTime = inputContent[i+1];
+				break;
+			}
+		}
+	}
+	
+	//å°†æ—¥æœŸyyyy-MM-ddæ¢æˆå¤©
 	public static int changeDate(int i,String CreatTime) {
 		try {
 			date = sdf.parse(CreatTime);
@@ -79,8 +123,8 @@ public class Predict {
 		int day=(int)DayNum;		
 		return day-BasePoint;		
 	}
+	//çº¿æ€§é¢„æµ‹æ¨¡åž‹
 	public static double LinearModel(int day,int flavor) {
-		int result = 0;
 		double tamp=0.0; 
 		for(int i=1;i<=30;i++) {
 			if(i<=5) {
@@ -94,7 +138,46 @@ public class Predict {
 			}
 		}
 		TrainData[day][flavor]=tamp;
-		result=(int)tamp;
 		return tamp;
+	}
+	public static void PredictResult(String start,String end) {
+		int begin = changeDate(3,start);
+		int finish= changeDate(3,end);
+		for(int i=begin;i<=finish;i++) {
+			
+		}
+	}
+	private static String[] generateResult(){
+		totalPhysicalMachineNum =  predictVmNums.size();
+		result = new String[3 + predictVmNums.size() + totalPhysicalMachineNum];
+		
+		result[0] = String.valueOf(predictVmNums.size());
+		
+		Iterator<Entry<Integer, int[]>> iter = predictVmNums.entrySet().iterator();
+		int i=1;
+		while (iter.hasNext()) {
+			Map.Entry<Integer, int[]> entry = (Map.Entry<Integer, int[]>) iter.next();
+			int flavorName = entry.getKey();
+			int perFlavorNum = entry.getValue()[2];
+			result[i++] = "flavor" + flavorName + " " + perFlavorNum;
+		}
+		
+		result[i++] = "\n\n\n";
+		
+		test();
+		
+		result[i++] = String.valueOf(totalPhysicalMachineNum);
+		
+		for (int j = 0; j < totalPhysicalMachineNum; j++) {
+			result[i + j] = physicalAllocationResult[j];
+		}
+		return result;
+	}
+	
+	private static void test(){
+		physicalAllocationResult = new String[totalPhysicalMachineNum];
+		for (int i = 0; i < totalPhysicalMachineNum; i++) {
+			physicalAllocationResult[i] = String.valueOf(i + 1)+" " + result[i+1];			
+		}
 	}
 }
