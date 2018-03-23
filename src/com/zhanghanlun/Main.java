@@ -4,14 +4,7 @@ package com.zhanghanlun;
 //import com.filetool.util.FileUtil;
 //import com.filetool.util.LogUtil;
 
-/**
- * 
- * 工具入口
- * 
- * @version [版本号, 2017-12-8]
- * @see [相关类/方法]
- * @since [产品/模块版本]
- */
+
 public class Main {
 	public static void main(String[] args) {
 
@@ -21,33 +14,24 @@ public class Main {
 			return;
 		}
 		/**
-		 * ecsData 是训练数据
-		 * input 是输入的训练要求
-		 * output 输出的结果
+		 * ecsData 
+		 * input 
+		 * output 
 		 */
 
 		String ecsDataPath = args[0];
 		String inputFilePath = args[1];
 		String resultFilePath = args[2];
-
 		LogUtil.printLog("Begin");
-
-		// 读取输入文件
 		String[] ecsContent = FileUtil.read(ecsDataPath, null);
 		String[] inputContent = FileUtil.read(inputFilePath, null);
-		// 功能实现入口
 		String[] resultContents = Predict.predictVm(ecsContent, inputContent);
-//		for(int i=0;i<resultContents.length;i++) {
-//		System.out.println(resultContents[i]);
-//	    }
-		
-		// 写入输出文件
-//		if (hasResults(resultContents)) {
-//			FileUtil.write(resultFilePath, resultContents, false);
-//		} else {
-//			FileUtil.write(resultFilePath, new String[] { "NA" }, false);
-//		}
-//		LogUtil.printLog("End");
+		if (hasResults(resultContents)) {
+			FileUtil.write(resultFilePath, resultContents, false);
+		} else {
+			FileUtil.write(resultFilePath, new String[] { "NA" }, false);
+		}
+		LogUtil.printLog("End");
 	}
 
 	private static boolean hasResults(String[] resultContents) {
